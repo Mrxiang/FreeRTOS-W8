@@ -2,9 +2,8 @@
 // Created by xshx on 2021/9/29.
 //
 
-#ifndef SIMULATOR_LINUX_UART5_H
-#define SIMULATOR_LINUX_UART5_H
-
+#ifndef FREERTOS_W8_POWER_H
+#define FREERTOS_W8_POWER_H
 #include <stdio.h>
 #include <stdlib.h>
 #include "main.h"
@@ -13,7 +12,5 @@
 #include "task.h"
 #include "queue.h"
 
-
-int uart5_task_start(void );
-
-#endif //SIMULATOR_LINUX_UART5_H
+int power_task_start();
+#endif //FREERTOS_W8_POWER_H

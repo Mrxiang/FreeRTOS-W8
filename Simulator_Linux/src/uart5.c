@@ -3,43 +3,51 @@
 //
 
 #include "uart5.h"
+#include "commen.h"
 
-typedef struct
-{
-    int ID;
-    char sender[20];
-    char Data[ 100 ];
-} Message, *pMessage;
 
-//xQueueHandle MsgQueue;
 extern  xQueueHandle  Uart8MsgQueue;
 static const char *logtag ="[UART5]-";
 
-static void Uart5SenderTask(void *pvParameters){
-    printf("创建MainTASK \n");
-    Message message;
-    memset(&message, 0, sizeof(Message));
-    message.ID=5;
-    strcpy(message.sender, logtag);
-    portBASE_TYPE  xStatus;
 
-    for (;  ;) {
-//        vTaskDelay( 2000/portTICK_RATE_MS );
-        strcpy( message.Data, "from uart5 to uart8");
-        xStatus = xQueueSend( Uart8MsgQueue, (void *)&message, 0 );
-        if(xStatus != pdPASS ){
-            printf("could not send to the queue \r\n");
-
-        }else{
-            printf("%s send [ %s ID =%d  DATA=%s]\r\n",logtag, message.sender, message.ID, message.Data );
+int ProcessMessage(int nCommandID,unsigned char nMessageLen, char *Data) {
+    ProcMessageByHead(HEAD_MARK, nCommandID, nMessageLen, Data);
+    return 0;
+}
+int ProcMessageByHead(unsigned char nHead,int  nCommandID,unsigned char nMessageLen,char *Data) {
+    printf("%s ======Command[0x%X], nMessageLen<%d>, Data<%s>\r\n", logtag, nCommandID, nMessageLen, Data);
+    switch (nCommandID) {
+        case CMD_INITOK_SYNC: {
+            SendMessageToUart5(CMD_INITOK_SYNC, Data);
+            break;
         }
-        taskYIELD();
-        message.ID++;
+        default:
+            SendMessageToUart8(nCommandID, Data );
+            break;
     }
+    return 0;
+}
+
+static void Uart5MainTask( void *pvParameters){
+
+    uint8_t recv_buffer[64] = {0};
+
+    printf("%s main task start \n", logtag);
+    LPUART_RTOS_Init();
+    do{
+        //接收
+        LPUART_RTOS_Receive(recv_buffer, 64);
+
+        //处理消息
+        ProcessMessage( CMD_TEMPER_DATA, 64, recv_buffer );
+    }while (1);
+
 
 }
+
+
 static void Uart5ReceiverTask(void *pvParamters){
-    printf("创建接收TASK \n");
+    printf("%s 创建接收TASK \n", logtag);
 
     Message message;
     portBASE_TYPE  xStatus;
@@ -64,8 +72,8 @@ int uart5_task_start(void ){
 
     Uart5MsgQueue = xQueueCreate(5, sizeof(Message));
 
-    printf("创建 uart5 task \n");
-    if (xTaskCreate(Uart5SenderTask, "uart5 Sender", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL) != pdPASS) {
+    printf("%s 创建 uart5 task \n", logtag);
+    if (xTaskCreate(Uart5MainTask, "uart5 Sender", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL) != pdPASS) {
         printf("创建uart5 task \n");
 
     }

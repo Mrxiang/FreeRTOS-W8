@@ -82,20 +82,9 @@ void Uart8_Task(void *pvParameters) {
 int main(void ){
     printf("创建两个TASK \n");
 
-#ifdef TEST
-    MsgQueue = xQueueCreate( 5 , sizeof( Message ) );
-    if (xTaskCreate(vSenderTask, "UART5", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL) != pdPASS) {
-        printf("vSenderTask  ERROR\r\n");
-    }
-    if (xTaskCreate(vReceiverTask, "UART8", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL) != pdPASS) {
-        printf("vSenderTask  ERROR\r\n");
-    }
+    uart5_task_start( );
+    uart8_task_start( );
 
-#else
-     uart5_task_start( );
-     uart8_task_start( );
-
-#endif
     vTaskStartScheduler();
     printf("START TASKS \r\n");
     return 0;

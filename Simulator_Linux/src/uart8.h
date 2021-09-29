@@ -13,6 +13,8 @@
 #include "task.h"
 #include "queue.h"
 
+xQueueHandle  Uart8MsgQueue;
+
 int uart8_task_start(void );
 
 #endif //SIMULATOR_LINUX_UART8_H

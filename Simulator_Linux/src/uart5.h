@@ -12,7 +12,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
-
+xQueueHandle  Uart5MsgQueue;
 int uart5_task_start(void );
 
 #endif //SIMULATOR_LINUX_UART5_H

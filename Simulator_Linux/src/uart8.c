@@ -7,7 +7,7 @@
 
 
 
-extern  xQueueHandle  Uart5MsgQueue;
+//extern  xQueueHandle  Uart5MsgQueue;
 static const char *logtag ="[UART8]-";
 
 
@@ -21,8 +21,10 @@ static void Uart8InitTask( void *pvParameters){
 
 static void Uart8MainTask( void *pvParameters){
 
-    printf("%s 主任务 \n", logtag);
+    printf("%s 创建 Main Task \n", logtag);
     while(MqttStatus != MQTT_OFFLINE ){
+        vTaskDelay(pdMS_TO_TICKS(1000));
+
         if( MqttStatus == MQTT_ONLINE ){
             printf("%s MQTT 已连接 \n", logtag);
             MqttStatus = MQTT_ONLINE;
@@ -30,9 +32,8 @@ static void Uart8MainTask( void *pvParameters){
         } else{
             printf("%s offline \n", logtag);
             char *data ="下电 \n";
-            SendMessageToUart5(CMD_CLOSE_FACEBOARD, data);
+            SendMessageToUart5(CMD_CLOSE_FACEBOARD, UART8_TASK, data);
         }
-        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
 
@@ -46,24 +47,23 @@ static void Uart8ReceiverTask(void *pvParamters){
     const portTickType xTicksToWait = 100/portTICK_RATE_MS;
 
     for (;  ;) {
-        if (uxQueueMessagesWaiting(Uart8MsgQueue) != 0) {
-            printf("%s queue should have been empty ! \r\n", logtag);
+        if(   xQueuePeek(MessageQueue, &message, xTicksToWait) ==pdPASS ){
+            if( message.ReceiverID == UART8_TASK ){
+                if(  xQueueReceive(MessageQueue, &message, xTicksToWait) ==pdPASS ){
+                    printf("%s receive[SenderID  %d,  ID = %d, DATA = %s]\n",logtag, message.SenderID, message.MessageID, message.Data );
+                } else {
+                    printf("receive error %d\n", xStatus);
+                }
+            }
+
         }
-
-        xStatus = xQueueReceive(Uart8MsgQueue, &message, xTicksToWait);
-        if (xStatus == pdPASS) {
-            printf("%s receive[  %s  ID = %d DATA = %s]\r\n",logtag, message.sender, message.ID, message.Data );
-        } else {
-            printf("could not receive from the queue \r\n");
-        }
-
-
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
 
 int uart8_task_start(void ){
 
-    Uart8MsgQueue = xQueueCreate(5, sizeof(Message));
+//    Uart8MsgQueue = xQueueCreate(5, sizeof(Message));
 
 
     printf("%s 创建 uart8 task \n", logtag);

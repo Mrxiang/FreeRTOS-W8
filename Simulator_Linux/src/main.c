@@ -11,16 +11,18 @@
 #include "queue.h"
 #include "uart5.h"
 #include "uart8.h"
-#include "power.h"
+#include "mcu.h"
 
+#include "commen.h"
 
 
 int main(void ){
-    printf("创建两个TASK \n");
+    printf("创建 3个 TASK \n");
+    MessageQueue = xQueueCreate(5, sizeof(Message));
 
     uart5_task_start( );
     uart8_task_start( );
-    power_task_start();
+    mcu_task_start();
 
     vTaskStartScheduler();
     printf("START TASKS \r\n");

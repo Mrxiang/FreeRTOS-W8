@@ -6,7 +6,7 @@
 #include "commen.h"
 
 
-extern  xQueueHandle  Uart8MsgQueue;
+//extern  xQueueHandle  Uart8MsgQueue;
 static const char *logtag ="[UART5]-";
 
 
@@ -15,14 +15,15 @@ int ProcessMessage(int nCommandID,unsigned char nMessageLen, char *Data) {
     return 0;
 }
 int ProcMessageByHead(unsigned char nHead,int  nCommandID,unsigned char nMessageLen,char *Data) {
-    printf("%s ======Command[0x%X], nMessageLen<%d>, Data<%s>\r\n", logtag, nCommandID, nMessageLen, Data);
+    printf("%s ======Command[0x%x], nMessageLen<%d>, Data<%s>\n", logtag, nCommandID, nMessageLen, Data);
     switch (nCommandID) {
         case CMD_INITOK_SYNC: {
-            SendMessageToUart5(CMD_INITOK_SYNC, Data);
+            printf("%s 收到初始化消息\n", logtag);
+            SendMessageToMCU(CMD_INITOK_SYNC,UART5_TASK, Data);
             break;
         }
         default:
-            SendMessageToUart8(nCommandID, Data );
+            SendMessageToUart8(nCommandID,UART5_TASK, Data );
             break;
     }
     return 0;
@@ -32,15 +33,19 @@ static void Uart5MainTask( void *pvParameters){
 
     uint8_t recv_buffer[64] = {0};
 
-    printf("%s main task start \n", logtag);
+    printf("%s 创建 Main Task  \n", logtag);
     LPUART_RTOS_Init();
-    do{
+    while(1){
         //接收
+        printf("%s 接收串口消息\n", logtag);
         LPUART_RTOS_Receive(recv_buffer, 64);
-
         //处理消息
-        ProcessMessage( CMD_TEMPER_DATA, 64, recv_buffer );
-    }while (1);
+        printf("%s 处理串口消息\n", logtag);
+        ProcessMessage(CMD_INITOK_SYNC , 64, recv_buffer );
+
+        vTaskDelay(pdMS_TO_TICKS(1000));
+
+    };
 
 
 }
@@ -54,23 +59,25 @@ static void Uart5ReceiverTask(void *pvParamters){
     const portTickType xTicksToWait = 100/portTICK_RATE_MS;
 
     for (;  ;) {
-        if (uxQueueMessagesWaiting(Uart5MsgQueue) != 0) {
-            printf("%s queue should have been empty ! \r\n", logtag);
-        }
 
-        xStatus = xQueueReceive(Uart5MsgQueue, &message, xTicksToWait);
-        if (xStatus == pdPASS) {
-            printf("%s receive[  %s  ID = %d DATA = %s]\r\n",logtag, message.sender, message.ID, message.Data );
+        if( xQueuePeek(MessageQueue, &message, xTicksToWait)==pdPASS ){
+            if( message.ReceiverID == UART5_TASK && (message.SenderID == UART8_TASK) ){
+                if(  xQueueReceive(MessageQueue, &message, xTicksToWait)==pdPASS){
+                    printf("%s receive[SenderID %d  ID = %d DATA = %s]\n",logtag, message.SenderID, message.MessageID, message.Data );
 
-        } else {
-            printf("could not receive from the queue \r\n");
+                } else {
+                    printf("receive error %d \n", xStatus);
+                }
+            }
         }
+        vTaskDelay(pdMS_TO_TICKS(1000));
+
     }
 }
 
 int uart5_task_start(void ){
 
-    Uart5MsgQueue = xQueueCreate(5, sizeof(Message));
+//    Uart5MsgQueue = xQueueCreate(5, sizeof(Message));
 
     printf("%s 创建 uart5 task \n", logtag);
     if (xTaskCreate(Uart5MainTask, "uart5 Sender", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL) != pdPASS) {

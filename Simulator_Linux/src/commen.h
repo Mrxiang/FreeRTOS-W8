@@ -55,18 +55,33 @@
 #define HEAD_MARK_MQTT		0x24     /*  ‘for mqtt’*/
 
 
-typedef struct
+
+typedef  enum {
+    MCU_TASK,
+    UART5_TASK,
+    UART8_TASK
+}TASKID;
+
+typedef  struct
 {
-    int ID;
-    char sender[20];
+    int MessageID;
+    int SenderID;
+    int ReceiverID;
     char Data[ 100 ];
 } Message, *pMessage;
 
-xQueueHandle  Uart5MsgQueue;
-xQueueHandle  Uart8MsgQueue;
+//xQueueHandle  Uart5MsgQueue;
+//xQueueHandle  Uart8MsgQueue;
+//xQueueHandle  McuMsgQueue;
 
-void SendMessageToUart5(int ID,char *data);
-void SendMessageToUart8(int ID,char *data);
+
+//只定义一个MessageQueue
+xQueueHandle  MessageQueue;
+
+
+void SendMessageToUart5(int ID,TASKID SenderID, char *data);
+void SendMessageToUart8(int ID,TASKID SenderID,char *data);
+void SendMessageToMCU(int ID,TASKID SenderID,char *data);
 
 int ProcessMessage( int nCommandID,unsigned char nMessageLen, char *Data);
 

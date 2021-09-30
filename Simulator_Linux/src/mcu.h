@@ -11,6 +11,5 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
-
-int power_task_start();
+int mcu_task_start();
 #endif //FREERTOS_W8_POWER_H

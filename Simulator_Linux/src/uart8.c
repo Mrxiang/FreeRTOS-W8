@@ -32,32 +32,30 @@ static void Uart8MainTask( void *pvParameters){
         } else{
             printf("%s offline \n", logtag);
             char *data ="下电 \n";
-            SendMessageToUart5(CMD_CLOSE_FACEBOARD, UART8_TASK, data);
+            SendMessageToUart5FromUart8(CMD_CLOSE_FACEBOARD, data);
         }
     }
 }
 
 
-
-static void Uart8ReceiverTask(void *pvParamters){
+static void Uart8ReceiverTask(void *pvParamters) {
     printf("%s 创建接收TASK \n", logtag);
 
     Message message;
-    portBASE_TYPE  xStatus;
-    const portTickType xTicksToWait = 100/portTICK_RATE_MS;
+    portBASE_TYPE xStatus;
+    const portTickType xTicksToWait = 100 / portTICK_RATE_MS;
 
-    for (;  ;) {
-        if(   xQueuePeek(MessageQueue, &message, xTicksToWait) ==pdPASS ){
-            if( message.ReceiverID == UART8_TASK ){
-                if(  xQueueReceive(MessageQueue, &message, xTicksToWait) ==pdPASS ){
-                    printf("%s receive[SenderID  %d,  ID = %d, DATA = %s]\n",logtag, message.SenderID, message.MessageID, message.Data );
-                } else {
-                    printf("receive error %d\n", xStatus);
-                }
+    for (;;) {
+        while (uxQueueMessagesWaiting(Uart8MsgQueue)) {
+
+            if (xQueueReceive(Uart8MsgQueue, &message, xTicksToWait) == pdPASS) {
+                printf("%s receive[SenderID  %d,  ID = %d, DATA = %s]\n", logtag, message.SenderID, message.MessageID,
+                       message.Data);
+            } else {
+                printf("%s receive error %d\n", logtag, xStatus);
             }
-
         }
-        vTaskDelay(pdMS_TO_TICKS(1000));
+//        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
 

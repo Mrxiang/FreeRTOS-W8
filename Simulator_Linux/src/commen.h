@@ -70,18 +70,21 @@ typedef  struct
     char Data[ 100 ];
 } Message, *pMessage;
 
-//xQueueHandle  Uart5MsgQueue;
-//xQueueHandle  Uart8MsgQueue;
-//xQueueHandle  McuMsgQueue;
+xQueueHandle  Uart5FromUart8MsgQueue;
+xQueueHandle  Uart5FromMcuMsgQueue;
+xQueueHandle  Uart8MsgQueue;
+xQueueHandle  McuMsgQueue;
 
 
 //只定义一个MessageQueue
 xQueueHandle  MessageQueue;
 
 
-void SendMessageToUart5(int ID,TASKID SenderID, char *data);
-void SendMessageToUart8(int ID,TASKID SenderID,char *data);
-void SendMessageToMCU(int ID,TASKID SenderID,char *data);
+//void SendMessageToUart5(int ID,TASKID SenderID, char *data);
+void SendMessageToUart5FromUart8(int ID, char *data);
+void SendMessageToUart5FromMcu(int ID, char *data);
+void SendMessageToUart8(int ID,char *data);
+void SendMessageToMCU(int ID,char *data);
 
 int ProcessMessage( int nCommandID,unsigned char nMessageLen, char *Data);
 

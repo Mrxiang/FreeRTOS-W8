@@ -22,7 +22,6 @@ typedef enum {
     MQTT_FREE	            /* (5) Given parameter is invalid */
 } MQTT_STATUS;
 
-MQTT_STATUS   MqttStatus;
 int uart8_task_start(void );
 
 #endif //SIMULATOR_LINUX_UART8_H

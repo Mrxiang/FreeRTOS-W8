@@ -5,9 +5,18 @@
 #include "commen.h"
 
 const char *logtag = "[UART DRIVER]-";
+unsigned char Init_Request[128]="230105302E302E32DDEC";
 
 int LPUART_RTOS_Init() {
     printf("%s 初始化 uart 驱动 \n", logtag);
+//    char Init_dest[64];
+//    memset(Init_dest, 0, sizeof(Init_dest));
+//    StrToHex(Init_dest, Init_Request, sizeof(Init_dest));
+//    for( int i=0; i< sizeof(Init_dest); i++){
+//        printf("0x%x \n", Init_dest[i]);
+//    }
+//    SendMessageToMCU( Init_dest);
+    SendMessageToMCU( Init_Request);
 }
 
 int LPUART_RTOS_Receive(char *buffer, int length) {

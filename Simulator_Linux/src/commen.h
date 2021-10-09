@@ -53,6 +53,7 @@
 
 #define HEAD_MARK			0x23     /*  ‘#’*/
 #define HEAD_MARK_MQTT		0x24     /*  ‘for mqtt’*/
+#define CRC16_LEN			2
 
 
 
@@ -67,7 +68,7 @@ typedef  struct
     int MessageID;
     int SenderID;
     int ReceiverID;
-    char Data[ 100 ];
+    char Data[ 128 ];
 } Message, *pMessage;
 
 xQueueHandle  Uart5FromUart8MsgQueue;
@@ -81,13 +82,39 @@ xQueueHandle  MessageQueue;
 
 
 //void SendMessageToUart5(int ID,TASKID SenderID, char *data);
-void SendMessageToUart5FromUart8(int ID, char *data);
-void SendMessageToUart5FromMcu(int ID, char *data);
-void SendMessageToUart8(int ID,char *data);
-void SendMessageToMCU(int ID,char *data);
+void SendMessageToUart5FromUart8( char *data);
+void SendMessageToUart5FromMcu( char *data);
+void SendMessageToUart8(char *data);
+void SendMessageToMCU(char *data);
+
+const unsigned char *MsgHead_Unpacket(
+        const unsigned char *pszBuffer,
+        unsigned char iBufferSize,
+        unsigned char *HeadMark,
+        unsigned char *CmdId,
+        unsigned char *MsgLen);
+
+typedef struct _stRpMsgHead
+{
+    unsigned char		HeadMark;		/* 前导标识符（长度为1bytes）用于校验消息是否合法 */
+    unsigned char  	CmdID;			/* 消息命令（长度为1bytes） */
+    unsigned char 	MsgLen;			/* 数据长度（数据长度为1bytes） */
+}MESSAGE_HEAD, *PMESSAGE_HEAD;
 
 int ProcessMessage( int nCommandID,unsigned char nMessageLen, char *Data);
 
 int ProcMessageByHead(unsigned char nHead,int nCommandID,unsigned char nMessageLen,char *Data);
+
+uint8_t StrGetUInt8( const uint8_t * i_pSrc );
+uint16_t StrGetUInt16( const uint8_t * i_pSrc );
+uint32_t StrGetUInt32( const uint8_t * i_pSrc );
+void StrSetUInt8( uint8_t * io_pDst, const uint8_t i_u8Src );
+void StrSetUInt16( uint8_t * io_pDst, const uint16_t i_u16Src );
+void StrSetUInt32( uint8_t * io_pDst, const uint32_t i_u32Src );
+
+void StrToHex(unsigned char *pbDest, char *pszSrc, int nLen);
+void HexToStr(char *pszDest, unsigned char *pbSrc, int nLen);
+
+
 
 #endif //FREERTOS_W8_COMMEN_H

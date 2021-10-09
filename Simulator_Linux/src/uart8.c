@@ -10,6 +10,7 @@
 //extern  xQueueHandle  Uart5MsgQueue;
 static const char *logtag ="[UART8]-";
 
+MQTT_STATUS   MqttStatus=MQTT_OFFLINE;
 
 static void Uart8InitTask( void *pvParameters){
     printf("%s 初始化 \n", logtag);
@@ -22,19 +23,41 @@ static void Uart8InitTask( void *pvParameters){
 static void Uart8MainTask( void *pvParameters){
 
     printf("%s 创建 Main Task \n", logtag);
-    while(MqttStatus != MQTT_OFFLINE ){
-        vTaskDelay(pdMS_TO_TICKS(1000));
+    while( 1 ){
 
-        if( MqttStatus == MQTT_ONLINE ){
-            printf("%s MQTT 已连接 \n", logtag);
-            MqttStatus = MQTT_ONLINE;
-//            SendMessageToUart5()
-        } else{
-            printf("%s offline \n", logtag);
-            char *data ="下电 \n";
-            SendMessageToUart5FromUart8(CMD_CLOSE_FACEBOARD, data);
+        switch (MqttStatus){
+            case MQTT_ONLINE:
+                printf("%s MQTT 已连接, 转入下载模式 \n", logtag);
+                MqttStatus = MQTT_DOWNLOAD;
+                break;
+            case MQTT_DOWNLOAD:
+                printf("%s MQTT 下载完成, 转入上传模式 \n", logtag);
+                MqttStatus = MQTT_UPLOAD;
+                break;
+            case MQTT_UPLOAD:
+                printf("%s MQTT 上传完成, 转入上传实时模式 \n", logtag);
+                MqttStatus = MQTT_UPLOADING;
+                break;
+            case MQTT_UPLOADING:
+                printf("%s MQTT 上传完成, 转入空闲模式 \n", logtag);
+                MqttStatus = MQTT_FREE;
+                break;
+            case MQTT_FREE:
+                printf("%s MQTT 无任务,请求下电 \n", logtag);
+//                char *data ="23140100EZ4D";
+//                SendMessageToUart5FromUart8( data);
+                MqttStatus = MQTT_OFFLINE;
+                break;
+            case MQTT_OFFLINE:
+                printf("MQTT 离线 \n");
+                vTaskDelay(pdMS_TO_TICKS(1000));
+                break;
+            default:
+                break;
         }
+
     }
+
 }
 
 

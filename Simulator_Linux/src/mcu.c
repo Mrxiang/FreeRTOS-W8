@@ -22,7 +22,7 @@ static void McuMainTask(void *pvParamters){
     for (;  ;) {
         vTaskDelay(pdMS_TO_TICKS(1000));
         if( mcuStatus == MCU_WAKE ){
-            printf("\r\n %s %d  Start A Process ...\r\n", logtag, count);
+            printf("\r\n%s %d  Start A Process ...\r\n", logtag, count);
             SendMessageToUart5FromMcu( RECOGNIZE_CMD);
 
             count++;

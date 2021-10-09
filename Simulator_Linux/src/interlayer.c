@@ -3,7 +3,7 @@
 //
 #include "interlayer.h"
 
-static const char *logtag ="[interlayer]-";
+static const char *logtag ="[INTERFACE]-";
 
 void SendMessageToUart8(  char *data){
     if( Uart8MsgQueue != NULL ){
@@ -126,6 +126,6 @@ const unsigned char *MsgHead_Unpacket(
 //        printf("pstMessageHead->MsgLen  %d + sizeof(MESSAGE_HEAD) + CRC16_LEN > iBufferSize %d \n", (int)*MsgLen, iBufferSize);
 //        return NULL;
 //    }
-    printf("解包完成 \n");
+    printf("%s解包完成 \n",logtag);
     return pszBuffer + sizeof(MESSAGE_HEAD);
 }

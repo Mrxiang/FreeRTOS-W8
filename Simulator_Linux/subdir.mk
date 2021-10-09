@@ -3,6 +3,7 @@ C_SRCS += $(PROJ_ROOT)/src/uart5.c
 C_SRCS += $(PROJ_ROOT)/src/uart8.c
 C_SRCS += $(PROJ_ROOT)/src/mcu.c
 C_SRCS += $(PROJ_ROOT)/src/commen.c
+C_SRCS += $(PROJ_ROOT)/src/interlayer.c
 C_SRCS += $(PROJ_ROOT)/src/uart_driver.c
 
 OBJS += $(BUILD_TMP)/main.o
@@ -10,6 +11,7 @@ OBJS += $(BUILD_TMP)/uart5.o
 OBJS += $(BUILD_TMP)/uart8.o
 OBJS += $(BUILD_TMP)/mcu.o
 OBJS += $(BUILD_TMP)/commen.o
+OBJS += $(BUILD_TMP)/interlayer.o
 OBJS += $(BUILD_TMP)/uart_driver.o
 
 C_DEPS += $(BUILD_TMP)/main.d
@@ -17,6 +19,7 @@ C_DEPS += $(BUILD_TMP)/uart5.d
 C_DEPS += $(BUILD_TMP)/uart8.d
 C_DEPS += $(BUILD_TMP)/mcu.d
 C_DEPS += $(BUILD_TMP)/commen.d
+C_DEPS += $(BUILD_TMP)/interlayer.d
 C_DEPS += $(BUILD_TMP)/uart_driver.d
 
 # Each subdirectory must supply rules for building sources it contributes

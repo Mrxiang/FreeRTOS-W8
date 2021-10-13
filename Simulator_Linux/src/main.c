@@ -23,14 +23,12 @@ static const char *logtag ="[MAIN]-";
 int main(void ){
     printf("%s 创建 3个 TASK \n", logtag);
 
-    Uart5FromUart8MsgQueue = xQueueCreate(5, sizeof(Message));
-    Uart5FromMcuMsgQueue   = xQueueCreate(5, sizeof(Message));
-    Uart8MsgQueue   = xQueueCreate(5, sizeof(Message));
-    McuMsgQueue     = xQueueCreate(5, sizeof(Message));
+
 
     uart5_task_start( );
     uart8_task_start( );
     mcu_task_start();
+    mqtt_server_start();
 
     vTaskStartScheduler();
     printf("%s START TASKS \r\n", logtag);

@@ -5,14 +5,17 @@
 
 static const char *logtag ="[COMMEN_MIDDLE]-";
 
-void SendMessageToUart8(  char *data){
-    if( Uart8MsgQueue != NULL ){
+int boot_mode = BOOT_MODE_INVALID;  //0:短按;1：长按;2:蓝牙设置;3:蓝牙人脸注册;4:睡眠状态
+
+
+void SendMessageToUart8FromUart5(  char *data){
+    if( Uart8FromUart5MsgQueue != NULL ){
         Message message;
         memset(&message, 0, sizeof(Message));
         message.SenderID  = UART5_TASK;
         message.ReceiverID = UART8_TASK;
         strcpy(message.Data, data);
-        if(xQueueSend( Uart8MsgQueue, (void *)&message, 0 ) == pdPASS ){
+        if(xQueueSend( Uart8FromUart5MsgQueue, (void *)&message, 0 ) == pdPASS ){
             printf("%s send [SenderID %d, ReceiverID %d,  DATA=%s] \n",logtag, message.SenderID, message.ReceiverID,  message.Data );
 
         }else{
@@ -25,6 +28,28 @@ void SendMessageToUart8(  char *data){
     }
 
 }
+
+void SendMessageToUart8FromMqtt(  char *data){
+    if( Uart8FromUart5MsgQueue != NULL ){
+        Message message;
+        memset(&message, 0, sizeof(Message));
+        message.SenderID  = MQTT_SERVER;
+        message.ReceiverID = UART8_TASK;
+        strcpy(message.Data, data);
+        if(xQueueSend( Uart8FromUart5MsgQueue, (void *)&message, 0 ) == pdPASS ){
+            printf("%s send [SenderID %d, ReceiverID %d,  DATA=%s] \n",logtag, message.SenderID, message.ReceiverID,  message.Data );
+
+        }else{
+            printf("could not send to the queue \n");
+
+        }
+        taskYIELD();
+    }else{
+        printf("create  message queue first \n");
+    }
+
+}
+
 
 
 void SendMessageToUart5FromUart8( char *data){
@@ -67,12 +92,33 @@ void SendMessageToUart5FromMcu(  char *data){
 }
 
 
-void SendMessageToMCU( char *data){
+void SendMessageToMCUFromUart5( char *data){
     if( McuMsgQueue != NULL ){
         Message message;
         memset(&message, 0, sizeof(Message));
         message.SenderID = UART5_TASK;
         message.ReceiverID = MCU_TASK;
+        strcpy(message.Data, data);
+        if(xQueueSend( McuMsgQueue, (void *)&message, 0 ) == pdPASS ){
+            printf("%s send [SenderID %d, ReceiverID %d,   DATA=%s] \n",logtag, message.SenderID, message.ReceiverID,  message.Data );
+
+        }else{
+            printf("could not send to the queue \n");
+
+        }
+        taskYIELD();
+    }else{
+        printf("create  message queue first \n");
+    }
+}
+
+
+void SendMessageToMqttFromUart8( char *data){
+    if( McuMsgQueue != NULL ){
+        Message message;
+        memset(&message, 0, sizeof(Message));
+        message.SenderID = UART8_TASK;
+        message.ReceiverID = MQTT_SERVER;
         strcpy(message.Data, data);
         if(xQueueSend( McuMsgQueue, (void *)&message, 0 ) == pdPASS ){
             printf("%s send [SenderID %d, ReceiverID %d,   DATA=%s] \n",logtag, message.SenderID, message.ReceiverID,  message.Data );

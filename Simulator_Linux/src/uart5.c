@@ -6,14 +6,13 @@
 #include "middle/commen_middle.h"
 #include "middle/uart5_middle.h"
 
-//extern  xQueueHandle  Uart8MsgQueue;
+//extern  xQueueHandle  Uart8FromUart5MsgQueue;
 static const char *logtag ="[UART5]-";
 
+unsigned char Init_Request[128]="230105302E302E32DDEC";
 
-int ProcessMessage(unsigned char nCommand,unsigned char nMessageLen, unsigned  char *pszMessage) {
-    ProcMessageByHead(HEAD_MARK, nCommand, nMessageLen, pszMessage);
-    return 0;
-}
+
+
 int ProcMessageByHead(unsigned char nHead,unsigned char  nCommand,unsigned char nMessageLen,unsigned  char *pszMessage) {
     printf("%s ======Head[0x%x],Command[0x%x], nMessageLen<%d>, Message<%s>\n", logtag, nHead,nCommand, nMessageLen, pszMessage);
     switch (nCommand) {
@@ -104,7 +103,19 @@ int ProcMessageByHead(unsigned char nHead,unsigned char  nCommand,unsigned char 
     return 0;
 }
 
+static int ProcessMessage(unsigned char nCommand,unsigned char nMessageLen, unsigned  char *pszMessage) {
+    ProcMessageByHead(HEAD_MARK, nCommand, nMessageLen, pszMessage);
+    return 0;
+}
 
+static void Uart5InitTask( void *pvParameters){
+    printf("%s 初始化 \n", logtag);
+
+    SendMessageToMCUFromUart5( Init_Request);
+
+    vTaskDelete(NULL);
+
+}
 
 static void Uart5MainTask( void *pvParameters){
 
@@ -136,13 +147,9 @@ static void Uart5MainTask( void *pvParameters){
 
             }
 //            vTaskDelay(pdMS_TO_TICKS(1000));
-
         }
     }
-
-
 }
-
 
 static void Uart5ReceiverTask(void *pvParamters) {
     printf("%s 创建接收Uart8 消息TASK \n", logtag);
@@ -168,16 +175,21 @@ static void Uart5ReceiverTask(void *pvParamters) {
 
 int uart5_task_start(void ){
 
-//    Uart5MsgQueue = xQueueCreate(5, sizeof(Message));
+    Uart5FromUart8MsgQueue = xQueueCreate(5, sizeof(Message));
+    Uart5FromMcuMsgQueue   = xQueueCreate(5, sizeof(Message));
 
     printf("%s 创建 uart5 task \n", logtag);
 
+    if (xTaskCreate(Uart5InitTask, "uart5 init", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL) != pdPASS) {
+        printf("创建uart5 init task \n");
+
+    }
     if (xTaskCreate(Uart5MainTask, "uart5 Sender", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL) != pdPASS) {
-        printf("创建uart5 task \n");
+        printf("创建uart5  send task \n");
 
     }
     if (xTaskCreate(Uart5ReceiverTask, "uart5 receiver", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL) != pdPASS) {
-        printf("创建uart5 task \n");
+        printf("创建uart5 receive task \n");
     }
 
     return 0;

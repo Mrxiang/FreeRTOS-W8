@@ -13,6 +13,8 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
+#define  PROJECT_VERSION  "W8_106F_V1.4.2"
+#define  FIRMWARE_VERSION  "FW_W8_ba20c2_20210926_V1.4.2"
 
 #define CMD_INITOK_SYNC          		0x01		// 开机同步
 #define CMD_HEART_BEAT		          	0x02		// 心跳
@@ -55,12 +57,21 @@
 #define HEAD_MARK_MQTT		0x24     /*  ‘for mqtt’*/
 #define CRC16_LEN			2
 
-
+typedef enum
+{
+    BOOT_MODE_RECOGNIZE = 0,		// 短按--识别模式
+    BOOT_MODE_REMOTE = 1,		// 长按--远程开锁模式
+    BOOT_MODE_BLE = 2,      	// 蓝牙设置
+    BOOT_MODE_REG = 3,			//蓝牙人脸注册
+    BOOT_MODE_MECHANICAL_LOCK = 0xB,	//机械锁模式
+    BOOT_MODE_INVALID = 0XFF,	//非法模式
+}BootMode_Status;
 
 typedef  enum {
     MCU_TASK,
     UART5_TASK,
-    UART8_TASK
+    UART8_TASK,
+    MQTT_SERVER,
 }TASKID;
 
 typedef  struct
@@ -73,19 +84,22 @@ typedef  struct
 
 xQueueHandle  Uart5FromUart8MsgQueue;
 xQueueHandle  Uart5FromMcuMsgQueue;
-xQueueHandle  Uart8MsgQueue;
+
+xQueueHandle  Uart8FromUart5MsgQueue;
+xQueueHandle  Uart8FromMqttMsgQueue;
 xQueueHandle  McuMsgQueue;
+xQueueHandle  MqttServerMsgQueue;
 
 
-//只定义一个MessageQueue
-xQueueHandle  MessageQueue;
 
 
 //void SendMessageToUart5(int ID,TASKID SenderID, char *data);
 void SendMessageToUart5FromUart8( char *data);
 void SendMessageToUart5FromMcu( char *data);
-void SendMessageToUart8(char *data);
-void SendMessageToMCU(char *data);
+void SendMessageToUart8FromUart5(char *data);
+void SendMessageToUart8FromMqtt(char *data);
+void SendMessageToMcuFromUart5(char *data);
+void SendMessageToMqttFromUart8(char *data);
 
 const unsigned char *MsgHead_Unpacket(
         const unsigned char *pszBuffer,
@@ -101,7 +115,11 @@ typedef struct _stRpMsgHead
     unsigned char 	MsgLen;			/* 数据长度（数据长度为1bytes） */
 }MESSAGE_HEAD, *PMESSAGE_HEAD;
 
-int ProcessMessage(unsigned char nCommandID,unsigned char nMessageLen, unsigned  char *Data);
+//int ProcessMessage(unsigned char nCommandID,unsigned char nMessageLen, unsigned  char *Data);
 
-int ProcMessageByHead(unsigned char nHead, unsigned char nCommandID,unsigned char nMessageLen,unsigned  char *Data);
+//int ProcMessageByHead(unsigned char nHead, unsigned char nCommandID,unsigned char nMessageLen,unsigned  char *Data);
+
+
+
+
 #endif //FREERTOS_W8_INTERLAYER_H

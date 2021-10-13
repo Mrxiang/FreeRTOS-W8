@@ -61,7 +61,7 @@ static void Uart8MainTask( void *pvParameters){
 }
 
 
-static void Uart8ReceiverTask(void *pvParamters) {
+static void Uart8ReceiveUart5Task(void *pvParamters) {
     printf("%s 创建接收TASK \n", logtag);
 
     Message message;
@@ -69,9 +69,30 @@ static void Uart8ReceiverTask(void *pvParamters) {
     const portTickType xTicksToWait = 100 / portTICK_RATE_MS;
 
     for (;;) {
-        while (uxQueueMessagesWaiting(Uart8MsgQueue)) {
+        while (uxQueueMessagesWaiting(Uart8FromUart5MsgQueue)) {
 
-            if (xQueueReceive(Uart8MsgQueue, &message, xTicksToWait) == pdPASS) {
+            if (xQueueReceive(Uart8FromUart5MsgQueue, &message, xTicksToWait) == pdPASS) {
+                printf("%s receive[SenderID  %d,  ID = %d, DATA = %s]\n", logtag, message.SenderID, message.MessageID,message.Data);
+
+            } else {
+                printf("%s receive error %d\n", logtag, xStatus);
+            }
+        }
+//        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
+}
+
+static void Uart8ReceiveMqttTask(void *pvParamters) {
+    printf("%s 创建接收TASK \n", logtag);
+
+    Message message;
+    portBASE_TYPE xStatus;
+    const portTickType xTicksToWait = 100 / portTICK_RATE_MS;
+
+    for (;;) {
+        while (uxQueueMessagesWaiting(Uart8FromUart5MsgQueue)) {
+
+            if (xQueueReceive(Uart8FromUart5MsgQueue, &message, xTicksToWait) == pdPASS) {
                 printf("%s receive[SenderID  %d,  ID = %d, DATA = %s]\n", logtag, message.SenderID, message.MessageID,message.Data);
 
             } else {
@@ -84,8 +105,8 @@ static void Uart8ReceiverTask(void *pvParamters) {
 
 int uart8_task_start(void ){
 
-//    Uart8MsgQueue = xQueueCreate(5, sizeof(Message));
-
+    Uart8FromUart5MsgQueue = xQueueCreate(5, sizeof(Message));
+    Uart8FromMqttMsgQueue = xQueueCreate(5, sizeof(Message));
 
     printf("%s 创建 uart8 task \n", logtag);
     if (xTaskCreate(Uart8InitTask, "uart8 init", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL) != pdPASS) {
@@ -93,14 +114,17 @@ int uart8_task_start(void ){
 
     }
 
-    if (xTaskCreate(Uart8MainTask, "uart8 Sender", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL) != pdPASS) {
+    if (xTaskCreate(Uart8MainTask, "uart8 main", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL) != pdPASS) {
         printf("创建uart8 task \n");
 
     }
-    if (xTaskCreate(Uart8ReceiverTask, "uart8 receiver", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL) != pdPASS) {
+    if (xTaskCreate(Uart8ReceiveUart5Task, "uart8 receive uart5", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL) != pdPASS) {
         printf("创建uart8 task \n");
     }
 
+    if (xTaskCreate(Uart8ReceiveMqttTask, "uart8 receive mqtt server", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL) != pdPASS) {
+        printf("创建uart8 task \n");
+    }
     return 0;
 
 }

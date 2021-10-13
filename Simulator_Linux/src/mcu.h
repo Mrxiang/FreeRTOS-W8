@@ -14,8 +14,8 @@
 
 typedef enum {
     MCU_SLEEP = 0,		/* (0) 睡眠模式 */
-    MCU_WAKE,			/* (1) 唤醒模式 */
-
+    MCU_FREE,			/* (1) 空闲模式 */
+    MCU_WORK            /*(2) 工作模式*/
 } MCU_STATUS;
 
 

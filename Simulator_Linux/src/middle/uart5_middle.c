@@ -2,90 +2,95 @@
 // Created by xshx on 2021/10/13.
 //
 #include "uart5_middle.h"
+#include "commen_middle.h"
+
+extern int  boot_mode;
 
 //主控接收指令:  开机同步响应
 int cmdSysInitOKSyncRsp(unsigned char nMessageLen, const unsigned char *pszMessage) {
     printf("接收开机同步响应 \r\n");
-//    unsigned char szBuffer[32] = {0};
-//
-//    memcpy(szBuffer, pszMessage, nMessageLen);
-//
-//    uint8_t year = 0, month = 0, day = 0, hour = 0, min = 0, sec = 0, i = 0;
-//    year = StrGetUInt8(pszMessage + i);
-//    i++;
-//    month = StrGetUInt8(pszMessage + i);
-//    i++;
-//    day = StrGetUInt8(pszMessage + i);
-//    i++;
-//    hour = StrGetUInt8(pszMessage + i);
-//    i++;
-//    min = StrGetUInt8(pszMessage + i);
-//    i++;
-//    sec = StrGetUInt8(pszMessage + i);
-//    i++;
-//    printf("setTime:%04d-%02d-%02d %02d:%02d:%02d \r\n", 2000 + year, month, day, hour, min, sec);
-//
-//    if ((month == 0 || month > 12) || (day == 0 || day > 31) || hour > 24 || min > 60 || sec > 60) {
-//        printf("Set Time value error!\r\n");
-//    } else {
-//        /*系统时间设置*/
+    unsigned char szBuffer[32] = {0};
+
+    memcpy(szBuffer, pszMessage, nMessageLen);
+
+    uint8_t year = 0, month = 0, day = 0, hour = 0, min = 0, sec = 0, i = 0;
+    int battery_level = -1;
+
+    year = StrGetUInt8(pszMessage + i);
+    i++;
+    month = StrGetUInt8(pszMessage + i);
+    i++;
+    day = StrGetUInt8(pszMessage + i);
+    i++;
+    hour = StrGetUInt8(pszMessage + i);
+    i++;
+    min = StrGetUInt8(pszMessage + i);
+    i++;
+    sec = StrGetUInt8(pszMessage + i);
+    i++;
+    printf("setTime:%04d-%02d-%02d %02d:%02d:%02d \r\n", 2000 + year, month, day, hour, min, sec);
+
+    if ((month == 0 || month > 12) || (day == 0 || day > 31) || hour > 24 || min > 60 || sec > 60) {
+        printf("Set Time value error!\r\n");
+    } else {
+        /*系统时间设置*/
 //        SysTimeSet(year, month, day, hour, min, sec);
-//    }
-//
+    }
+
 //    bSysTimeSynProc = true;
 //
-//    //解析设置参数
-//    battery_level = StrGetUInt8(pszMessage + i);
-//    i++;
-//    printf("battery_level:<%d>.\r\n", battery_level);
+    //解析设置参数
+    battery_level = StrGetUInt8(pszMessage + i);
+    i++;
+    printf("battery_level:<%d>.\r\n", battery_level);
 //    bInitSyncInfo = true;
 //
 //
-//    {
-//        char verbuf[4] = {0};
-//        char ver_tmp[32] = {0};
-//
-//        /* 保存x7 信息到系统配置文件 */
-//        // 获取字符串格式的版本号
-//        memset(verbuf, 0, sizeof(verbuf));
-//        memset(ver_tmp, 0, sizeof(ver_tmp));
-//        sprintf(ver_tmp, "%s", FIRMWARE_VERSION);
+    {
+        char verbuf[4] = {0};
+        char ver_tmp[32] = {0};
+
+        /* 保存x7 信息到系统配置文件 */
+        // 获取字符串格式的版本号
+        memset(verbuf, 0, sizeof(verbuf));
+        memset(ver_tmp, 0, sizeof(ver_tmp));
+        sprintf(ver_tmp, "%s", FIRMWARE_VERSION);
 //        update_sys_info(ver_tmp);
-//        //printf("SYS_VERSION :<%s>.\n", ver_tmp);
+        printf("SYS_VERSION :<%s>.\n", ver_tmp);
 //
-//        // 保存设置到系统配置文件
-//        memset(ver_tmp, 0, sizeof(ver_tmp));
-//        sprintf(ver_tmp, "%s", PROJECT_VERSION);
+        // 保存设置到系统配置文件
+        memset(ver_tmp, 0, sizeof(ver_tmp));
+        sprintf(ver_tmp, "%s", PROJECT_VERSION);
 //        update_project_info(ver_tmp);
-//        //printf("OASIS_VERSION :<%s>.\n", ver_tmp);
+        printf("OASIS_VERSION :<%s>.\n", ver_tmp);
 //
 //
-//        /* 保存MCU 信息到系统配置文件 */
-//        // 获取字符串格式的版本号
-//        memset(verbuf, 0, sizeof(verbuf));
-//        memset(ver_tmp, 0, sizeof(ver_tmp));
-//        //sprintf(verbuf, "%03d", stInitSyncInfo.Mcu_Ver);
-//        //sprintf(ver_tmp, "W8_HC130_106F_V%c.%c.%c", verbuf[0], verbuf[1], verbuf[2]);
-//        verbuf[1] = StrGetUInt8(pszMessage + i);
-//        i++;
-//        verbuf[0] = StrGetUInt8(pszMessage + i);
-//        i++;
-//        sprintf(ver_tmp, "W8_HC130_106F_V%d.%d.%d", verbuf[1], verbuf[0] >> 4, verbuf[0] & 0x0f);
-//        printf("MCU_VERSION:<%s>.\r\n", ver_tmp);
+        /* 保存MCU 信息到系统配置文件 */
+        // 获取字符串格式的版本号
+        memset(verbuf, 0, sizeof(verbuf));
+        memset(ver_tmp, 0, sizeof(ver_tmp));
+        //sprintf(verbuf, "%03d", stInitSyncInfo.Mcu_Ver);
+        //sprintf(ver_tmp, "W8_HC130_106F_V%c.%c.%c", verbuf[0], verbuf[1], verbuf[2]);
+        verbuf[1] = StrGetUInt8(pszMessage + i);
+        i++;
+        verbuf[0] = StrGetUInt8(pszMessage + i);
+        i++;
+        sprintf(ver_tmp, "W8_HC130_106F_V%d.%d.%d", verbuf[1], verbuf[0] >> 4, verbuf[0] & 0x0f);
+        printf("MCU_VERSION:<%s>.\r\n", ver_tmp);
 //
-//        // 保存设置到系统配置文件
+        // 保存设置到系统配置文件
 //        update_mcu_info(ver_tmp);
 //        //read_config("./config.ini");
-//        //printf("MCU_VERSION:<%s>.\n", ver_tmp);
-//
+        printf("MCU_VERSION:<%s>.\n", ver_tmp);
+
 //        //system("sync");
-//    }
+    }
 //
-//    boot_mode = StrGetUInt8(pszMessage + i);
-//    if (boot_mode > BOOT_MODE_MECHANICAL_LOCK) {
-//        boot_mode = BOOT_MODE_INVALID;
-//    }
-//    printf("boot_mode: %d\r\n", boot_mode);
+    boot_mode = StrGetUInt8(pszMessage + i);
+    if (boot_mode > BOOT_MODE_MECHANICAL_LOCK) {
+        boot_mode = BOOT_MODE_INVALID;
+    }
+    printf("boot_mode: %d\r\n", boot_mode);
 //    receive_boot_mode = 1;
 //    if ((boot_mode == BOOT_MODE_RECOGNIZE) || (boot_mode == BOOT_MODE_REG)) {
 //        if (oasis_task_start == false) {

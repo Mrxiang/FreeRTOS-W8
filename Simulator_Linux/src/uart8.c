@@ -3,7 +3,7 @@
 //
 
 #include "uart8.h"
-#include "interlayer.h"
+#include "middle/commen_middle.h"
 
 
 
@@ -72,8 +72,8 @@ static void Uart8ReceiverTask(void *pvParamters) {
         while (uxQueueMessagesWaiting(Uart8MsgQueue)) {
 
             if (xQueueReceive(Uart8MsgQueue, &message, xTicksToWait) == pdPASS) {
-                printf("%s receive[SenderID  %d,  ID = %d, DATA = %s]\n", logtag, message.SenderID, message.MessageID,
-                       message.Data);
+                printf("%s receive[SenderID  %d,  ID = %d, DATA = %s]\n", logtag, message.SenderID, message.MessageID,message.Data);
+
             } else {
                 printf("%s receive error %d\n", logtag, xStatus);
             }

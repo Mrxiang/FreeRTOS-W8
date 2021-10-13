@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "commen.h"
+#include "../util/util.h"
 #include "main.h"
 
 #include "FreeRTOS.h"
@@ -101,7 +101,7 @@ typedef struct _stRpMsgHead
     unsigned char 	MsgLen;			/* 数据长度（数据长度为1bytes） */
 }MESSAGE_HEAD, *PMESSAGE_HEAD;
 
-int ProcessMessage( int nCommandID,unsigned char nMessageLen, char *Data);
+int ProcessMessage(unsigned char nCommandID,unsigned char nMessageLen, unsigned  char *Data);
 
-int ProcMessageByHead(unsigned char nHead,int nCommandID,unsigned char nMessageLen,char *Data);
+int ProcMessageByHead(unsigned char nHead, unsigned char nCommandID,unsigned char nMessageLen,unsigned  char *Data);
 #endif //FREERTOS_W8_INTERLAYER_H

@@ -3,7 +3,7 @@
 //
 
 #include "mcu.h"
-#include "interlayer.h"
+#include "middle/commen_middle.h"
 
 //MCU TASK 和 uart5 交互
 static const char *logtag ="[MCU]-";
@@ -12,7 +12,7 @@ static const char *logtag ="[MCU]-";
 
 char Init_CMD[128]="23010B15091B00281044014000013B76";
 
-char RECOGNIZE_CMD[128]="2316078DC12E332B5E8FB8A0";
+char BLUETOOTH_CMD[128]="2316078DC12E332B5E8FB8A0";
 MCU_STATUS   mcuStatus=MCU_SLEEP;
 
 static void McuMainTask(void *pvParamters){
@@ -23,7 +23,7 @@ static void McuMainTask(void *pvParamters){
         vTaskDelay(pdMS_TO_TICKS(1000));
         if( mcuStatus == MCU_WAKE ){
             printf("\r\n%s %d  Start A Process ...\r\n", logtag, count);
-            SendMessageToUart5FromMcu( RECOGNIZE_CMD);
+            SendMessageToUart5FromMcu( BLUETOOTH_CMD);
 
             count++;
         }

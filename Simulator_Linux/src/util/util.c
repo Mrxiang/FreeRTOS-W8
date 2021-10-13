@@ -2,8 +2,8 @@
 // Created by xshx on 2021/9/29.
 //
 
-#include "commen.h"
-static const char *logtag ="[commen]-";
+#include "util.h"
+static const char *logtag ="[util]-";
 
 
 uint8_t StrGetUInt8( const uint8_t * i_pSrc )

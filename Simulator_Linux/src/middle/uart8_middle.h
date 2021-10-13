@@ -1,0 +1,8 @@
+//
+// Created by xshx on 2021/10/13.
+//
+
+#ifndef FREERTOS_W8_UART8_MIDDLE_H
+#define FREERTOS_W8_UART8_MIDDLE_H
+
+#endif //FREERTOS_W8_UART8_MIDDLE_H

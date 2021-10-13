@@ -3,26 +3,98 @@
 //
 
 #include "uart5.h"
-#include "interlayer.h"
-
+#include "middle/commen_middle.h"
+#include "middle/uart5_middle.h"
 
 //extern  xQueueHandle  Uart8MsgQueue;
 static const char *logtag ="[UART5]-";
 
 
-int ProcessMessage(int nCommandID,unsigned char nMessageLen, char *Data) {
-    ProcMessageByHead(HEAD_MARK, nCommandID, nMessageLen, Data);
+int ProcessMessage(unsigned char nCommand,unsigned char nMessageLen, unsigned  char *pszMessage) {
+    ProcMessageByHead(HEAD_MARK, nCommand, nMessageLen, pszMessage);
     return 0;
 }
-int ProcMessageByHead(unsigned char nHead,int  nCommandID,unsigned char nMessageLen,char *Data) {
-    printf("%s ======Head[0x%x],Command[0x%x], nMessageLen<%d>, Data<%s>\n", logtag, nHead,nCommandID, nMessageLen, Data);
-    switch (nCommandID) {
+int ProcMessageByHead(unsigned char nHead,unsigned char  nCommand,unsigned char nMessageLen,unsigned  char *pszMessage) {
+    printf("%s ======Head[0x%x],Command[0x%x], nMessageLen<%d>, Message<%s>\n", logtag, nHead,nCommand, nMessageLen, pszMessage);
+    switch (nCommand) {
+
         case CMD_INITOK_SYNC: {
             printf("%s 初始化完成\n", logtag);
+            cmdSysInitOKSyncRsp(nMessageLen, pszMessage);
             break;
         }
-        case CMD_BT_INFO:{
+        case CMD_OPEN_DOOR: {
+            cmdOpenDoorRsp(nMessageLen, pszMessage);
+
+            break;
+        }
+        case CMD_TEMPER_DATA:{//测温请求回复
+            cmdTemperRsp( nMessageLen, pszMessage );
+            break;
+        }
+        case CMD_CLOSE_FACEBOARD: {
+            cmdPowerDownRsp(nMessageLen, pszMessage);
+            break;
+        }
+        case CMD_FACE_REG: {
+            cmdUserRegReqProc(nMessageLen, pszMessage);
+            break;
+        }
+        case CMD_FACE_REG_RLT: {
+            break;
+        }
+        case CMD_NTP_SYS_TIME: {
+            cmdSetSysTimeSynProc(nMessageLen, pszMessage);
+            break;
+        }
+        case CMD_FACE_DELETE_USER: {
+            cmdDeleteUserReqProcByHead(/*HEAD_MARK*/nHead, nMessageLen, pszMessage);
+            break;
+        }
+        case CMD_REQ_RESUME_FACTORY: {
+            cmdReqResumeFactoryProc(nMessageLen, pszMessage);
+            break;
+        }
+        case CMD_REG_ACTIVE_BY_PHONE: {
+            cmdReqActiveByPhoneProc(nMessageLen, pszMessage);
+            break;
+        }
+        case CMD_WIFI_SSID: {
+            cmdWifiSSIDProc(nMessageLen, pszMessage);
+            break;
+        }
+        case CMD_WIFI_PWD: {
+            cmdWifiPwdProc(nMessageLen, pszMessage);
+            break;
+        }
+        case CMD_WIFI_MQTT: {
+            cmdMqttParamSetProc(nMessageLen, pszMessage);
+            break;
+        }
+        case CMD_WIFI_TIME_SYNC: {
+            cmdWifiTimeSyncRsp(nMessageLen, pszMessage);
+            break;
+        }
+        case CMD_ORDER_TIME_SYNC: {
+            cmdWifiOrderTimeSyncRsp(nMessageLen, pszMessage);
+            break;
+        }
+        case CMD_WIFI_OPEN_DOOR: {
+            cmdWifiOpenDoorRsp(nMessageLen, pszMessage);
+            break;
+        }
+
+        case CMD_BT_INFO: {
             printf("%s 收到蓝牙消息\n",logtag);
+            cmdBTInfoRptProc(nMessageLen, pszMessage);
+            break;
+        }
+        case CMD_WIFI_MQTTSER_URL: {
+            cmdMqttSvrURLProc(nMessageLen, pszMessage);
+            break;
+        }
+        case CMD_MECHANICAL_LOCK: {
+//            cmdMechicalLockRsp(nMessageLen, pszMessage);
             break;
         }
         default:

@@ -4,11 +4,16 @@
 
 #ifndef DB_DBMANAGER_H
 #define DB_DBMANAGER_H
+#include <stdio.h>
+#include <stdlib.h>
+#include "main.h"
 
+#include "FreeRTOS.h"
+#include "task.h"
+#include "queue.h"
 #include <list>
-#include "cJSON.h"
-#include "fsl_log.h"
-#include "fatfs_op.h"
+//#include "fsl_log.h"
+//#include "fatfs_op.h"
 
 
 #define RECORD_PATH "record.jsn"

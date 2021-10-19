@@ -6,6 +6,9 @@
 #include "DBManager.h"
 #include "FreeRTOS.h"
 #include "semphr.h"
+//#include "../cjson/cJSON_Utils.h"
+#include "../cjson/cJSON.h"
+//#include "../fatfs/fatfs_op.h"
 
 DBManager* DBManager::m_instance = NULL;
 list<Record*> DBManager::recordList ;
@@ -48,12 +51,13 @@ DBManager::DBManager() {
     	s_Record_Lock = xSemaphoreCreateMutex();
         if (NULL == s_Record_Lock)
         {
-            LOGE("[ERROR]:Create DB lock semaphore\r\n");
+            printf("[ERROR]:Create DB lock semaphore\r\n");
         }
     }
 
     initDB();
 }
+
 DBManager* DBManager::getInstance()
 {
     if(NULL == m_instance)
@@ -65,15 +69,12 @@ DBManager* DBManager::getInstance()
 
 bool DBManager::saveRecordToFile(list<Record*> recordList,char *filePath){
 
-    LOGD("----- 保存记录文件-----\r\n");
-#ifdef  FIX_SIZE
-    LOGD("-----0.写回固定文件-----\r\n");
+    printf("----- 保存记录文件-----\r\n");
 
-#else
-    LOGD("-----0.删除文件-----\r\n");
-    fatfs_delete( filePath );
-#endif
-    LOGD("-----1.将链表数据组织成json格式-----\r\n");
+    printf("-----0.写回文件-----\r\n");
+
+
+    printf("-----1.将链表数据组织成json格式-----\r\n");
     list <Record*>::iterator it;
     char 	*cjson_str = NULL;
     cJSON 	*jsonroot = NULL;
@@ -115,55 +116,45 @@ bool DBManager::saveRecordToFile(list<Record*> recordList,char *filePath){
     //cjson_str = cJSON_Print(jsonroot);
     cjson_str = cJSON_PrintUnformatted(jsonroot);
     if(cjson_str!=NULL){
-		LOGD("-----2.将json格式数据存文件----%d 条记录--\r\n", cJSON_GetArraySize(ObjArr));
-#ifdef  FIX_SIZE
-		//LOGD("%s sizeof(Record) is %d, strlen(cjson_str) is %d\r\n", __FUNCTION__, sizeof(Record), strlen(cjson_str));
-		//LOGD("%s cjson_str is %s \r\n", __FUNCTION__, cjson_str);
-        LOGD("%d , max size %d \r\n", strlen(cjson_str), MAX_BYTE);
-        assert( (strlen(cjson_str) < MAX_BYTE) );
-		memset(buf, 0, sizeof(buf));
-		memcpy(buf, cjson_str, strlen(cjson_str));
-		fatfs_write( filePath, buf, 0, MAX_BYTE);
-#else
-		LOGD("%d , max size %d \r\n", strlen(cjson_str), MAX_BYTE);
-        assert( (strlen(cjson_str) < MAX_BYTE) );
-		fatfs_write( filePath, cjson_str, 0, strlen(cjson_str));
-#endif
+		printf("-----2.将json格式数据存文件----%d 条记录--\r\n", cJSON_GetArraySize(ObjArr));
+
+		printf("%d , max size %d \r\n", strlen(cjson_str), MAX_BYTE);
+//		fatfs_write( filePath, cjson_str, 0, strlen(cjson_str));
+        FILE *file = fopen( filePath , "w" );
+        fwrite( cjson_str, strlen(cjson_str), 1, file);
 		vPortFree(cjson_str);
     }
     cJSON_Delete(jsonroot);
-    LOGD("----- 保存记录文件结束-----\r\n");
+    printf("----- 保存记录文件结束-----\r\n");
     return true;
 }
 list<Record*> DBManager::readRecordFromFile(char *filePath){
-    LOGD("-----1.从文件中读出json格式的记录-----\r\n");
+    printf("-----1.从文件中读出json格式的记录-----\r\n");
     int ArrLen = 0;
     int fsize=0;
-#ifdef FIX_SIZE
-    fsize=MAX_BYTE;
 
-#else
-    fsize = fatfs_getsize(filePath);
-
-#endif
-
+//    fsize = fatfs_getsize(filePath);
+    FILE *file = fopen( filePath, "r");
+    fseek(file, 0, SEEK_END);
+    fsize = ftell( file );
     if (fsize == -1) {
         return recordList;
     } else {
         memset(buf, 0, fsize);
-        int status = fatfs_read(filePath, buf, 0, fsize);
-        //LOGD("status %d file size %d ,%s \r\n", status, fsize, buf);
-        LOGD("status %d file size %d\r\n", status, fsize);
+        fseek(file, 0, SEEK_SET);
+        int ret = fread(buf, 1, fsize, file);
+        //printf("status %d file size %d ,%s \r\n", status, fsize, buf);
+        printf("ret %d file size %d\r\n", ret, fsize);
 
-        if (status == 0)
+        if (ret == 0)
         {
 			cJSON *jsonroot = cJSON_Parse(buf);
 			//4. 解析数组成员是json对象的数组ObjArr
-			LOGD("------2.将json 格式数据组织成链表---------\r\n");
+			printf("------2.将json 格式数据组织成链表---------\r\n");
 			cJSON *ObjArr = cJSON_GetObjectItem(jsonroot, DB_KEY_INFO);
 			if (cJSON_IsArray(ObjArr)) {
 				ArrLen = cJSON_GetArraySize(ObjArr);
-				LOGD("ObjArr Len: %d\r\n", ArrLen);
+				printf("ObjArr Len: %d\r\n", ArrLen);
 				for (int i = 0; i < ArrLen; i++) {
 					cJSON *SubObj = cJSON_GetArrayItem(ObjArr, i);
 					if (NULL == SubObj) {
@@ -187,28 +178,28 @@ list<Record*> DBManager::readRecordFromFile(char *filePath){
 				    Record_Lock();
 					recordList.push_back(record);
     				Record_UnLock();
-					//LOGD("i: [%d] id:%d, uuid:%s, action %d, time_stamp:%d, upload:%d\r\n", i, record->ID, record->UUID, record->action, record->time_stamp, record->upload);
-					//LOGD("i: [%d] id:%d, uuid:%s, time_stamp:%d, action_upload:%d\r\n", i, record->ID, record->UUID, record->time_stamp, record->action_upload);
-					//LOGD("i: [%d] uuid:%s, time_stamp:%d, action_upload:%d\r\n", i, record->UUID, record->time_stamp, record->action_upload);
-					//LOGD("[%d] %s, %d, %d\r\n", i, record->UUID, record->time_stamp, record->action_upload);
-					//LOGD("[%d] %d, %d\r\n", i, record->time_stamp, record->action_upload);
+					//printf("i: [%d] id:%d, uuid:%s, action %d, time_stamp:%d, upload:%d\r\n", i, record->ID, record->UUID, record->action, record->time_stamp, record->upload);
+					//printf("i: [%d] id:%d, uuid:%s, time_stamp:%d, action_upload:%d\r\n", i, record->ID, record->UUID, record->time_stamp, record->action_upload);
+					//printf("i: [%d] uuid:%s, time_stamp:%d, action_upload:%d\r\n", i, record->UUID, record->time_stamp, record->action_upload);
+					//printf("[%d] %s, %d, %d\r\n", i, record->UUID, record->time_stamp, record->action_upload);
+					//printf("[%d] %d, %d\r\n", i, record->time_stamp, record->action_upload);
 				}
 			}
 
 			cJSON_Delete(jsonroot);
         }else {
-        	 LOGD("readRecordFromFile status = %d \r\n", status);
+        	 printf("readRecordFromFile ret = %d \r\n", ret);
         }
     }
 
-    LOGD("%s end\r\n", __FUNCTION__);
+    printf("%s end\r\n", __FUNCTION__);
     return  recordList;
 }
 // 初始化DB
 void DBManager::initDB()
 {
 
-    LOGD("------初始化------ \r\n");
+    printf("------初始化------ \r\n");
     readRecordFromFile(RECORD_PATH);
 }
 
@@ -220,22 +211,15 @@ int DBManager::addRecord(Record *record){
 
 	int id = getLastRecordID()+1;
     int count = recordList.size();
-    LOGD("增加操作记录 %d  最大记录限制到 %d\r\n", id, max_size);
+    printf("增加操作记录 %d  最大记录限制到 %d\r\n", id, max_size);
     if( count >= MAX_COLUMN ){
         record->ID=id;
-#if 0
-        Record record0;
-		int ret = getRecordByID(0, &record0);
-		if (ret == 0) {
-			LOGD("record0.image_path is %s\r\n", record0.image_path);
-			fatfs_delete(record0.image_path);
-		}
-#endif
+
 	    Record_Lock();
 
 		Record* firstOne = recordList.front();
 		recordList.pop_front();
-		fatfs_delete(firstOne->image_path);
+		remove(firstOne->image_path);
 		vPortFree(firstOne);
         recordList.push_back( record );
     	Record_UnLock();
@@ -253,7 +237,7 @@ int DBManager::addRecord(Record *record){
 
 int  DBManager::getAllUnuploadRecordCount()
 {
-    LOGD("获取操作成功但未上传记录总数 \r\n");
+    printf("获取操作成功但未上传记录总数 \r\n");
     if( recordList.empty()== true ){
         getAllUnuploadRecord();
     }
@@ -270,7 +254,7 @@ list<Record*>  DBManager::getAllUnuploadRecord()
 {
     Record_Lock();
 
-    LOGD("获取全部开门成功，但未上传的识别记录 \r\n");
+    printf("获取全部开门成功，但未上传的识别记录 \r\n");
     list <Record*>::iterator it;
     for ( it = recordList.begin( ); it != recordList.end( ); ) {
         Record *tmpRecord = (Record *) *it;
@@ -290,14 +274,14 @@ Record*  DBManager::getLastRecord(   )
 {
     Record_Lock();
 
-    LOGD("获取最后一条记录 \r\n");
+    printf("获取最后一条记录 \r\n");
     Record *record= NULL;
     if( recordList.empty() != true ){
         record = recordList.back();
 
-        //LOGD("%s \n", record->UUID);
-        //LOGD("%ld\n", record->time_stamp);
-        LOGD("%s %d\r\n", record->UUID, record->time_stamp);
+        //printf("%s \n", record->UUID);
+        //printf("%ld\n", record->time_stamp);
+        printf("%s %d\r\n", record->UUID, record->time_stamp);
 
     }
     Record_UnLock();
@@ -306,7 +290,7 @@ Record*  DBManager::getLastRecord(   )
 }
 
 int DBManager::getLastRecordID(){
-        LOGD("获取最后一条记录\r\n");
+        printf("获取最后一条记录\r\n");
         Record_Lock();
 
         int ID=0;
@@ -324,7 +308,7 @@ int DBManager::getLastRecordID(){
 
 int DBManager::getRecordByID( int id, Record *record )
 {
-    LOGD("查找ID为 %d 的记录 \r\n", id);
+    printf("查找ID为 %d 的记录 \r\n", id);
     Record_Lock();
 
     int ret=-1;
@@ -341,7 +325,7 @@ int DBManager::getRecordByID( int id, Record *record )
 }
 bool  DBManager::updateRecordByID(Record *record)
 {
-    LOGD("更新ID匹配的识别记录\r\n");
+    printf("更新ID匹配的识别记录\r\n");
     Record_Lock();
 
     list <Record*>::iterator it;
@@ -357,44 +341,44 @@ bool  DBManager::updateRecordByID(Record *record)
 }
 bool  DBManager::updateLastRecordStatus(int status, long currTime)
 {
-    LOGD("更新最后一条记录\r\n");
+    printf("更新最后一条记录\r\n");
     return  true;
 }
 
 int DBManager::clearRecord()
 {
-    LOGD("清空操作记录 \r\n");
+    printf("清空操作记录 \r\n");
     Record_Lock();
 
     int ret = 0;
     list <Record*>::iterator it;
-    LOGD("clear records before vPortFree\r\n");
+    printf("clear records before vPortFree\r\n");
 
     for ( it = recordList.begin( ); it != recordList.end( );it++ ) {
     	vPortFree(*it);
     }
-    LOGD("clear records after vPortFree\r\n");
+    printf("clear records after vPortFree\r\n");
 
     recordList.clear();
     Record_UnLock();
-    LOGD("clear records before fatfs_delete\r\n");
+    printf("clear records before remove\r\n");
 
-    ret = fatfs_delete(RECORD_PATH);
-    LOGD("clear records after fatfs_delete %d\r\n", ret);
+    ret = remove(RECORD_PATH);
+    printf("clear records after remove %d\r\n", ret);
 
     return  ret;
 }
 bool DBManager::deleteRecordByUUID(char *UUID )
 {
-    LOGD("删除用户UUID %s 对应的操作记录 \r\n", UUID);
+    printf("删除用户UUID %s 对应的操作记录 \r\n", UUID);
     Record_Lock();
 
     bool flag=false;
     list <Record*>::iterator it;
     for ( it = recordList.begin( ); it != recordList.end( ); ) {
-        LOGD("%p\n", *it);
+        printf("%p\n", *it);
         Record *record = (Record *) *it;
-        LOGD("%s \n", record->UUID);
+        printf("%s \n", record->UUID);
         int ret= strcmp(record->UUID, UUID );
         if( ret == 0 ){
         	vPortFree(*it);
@@ -412,8 +396,8 @@ void DBManager::flushRecordList(){
         bool flag=false;
         flag = saveRecordToFile( recordList, RECORD_PATH);
         if( flag ){
-            LOGD("保存文件成功 \r\n");
+            printf("保存文件成功 \r\n");
         }else{
-            LOGD("保存文件失败 \r\n");
+            printf("保存文件失败 \r\n");
         }
 }

@@ -30,6 +30,7 @@ int main(void ){
     mcu_task_start();
     mqtt_server_start();
 
+
     vTaskStartScheduler();
     printf("%s START TASKS \r\n", logtag);
     return 0;
